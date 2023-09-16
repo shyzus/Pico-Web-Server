@@ -13,21 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see https://www.gnu.org/licenses/.
     
-# import board
-# import busio
-# import digitalio
-# import adafruit_sdcard
-# import storage
 import os
-# import json
-# import sys
-# 
-# import adafruit_requests as requests
-# from adafruit_esp32spi import adafruit_esp32spi
-# import adafruit_esp32spi.adafruit_esp32spi_wifimanager as wifimanager
-# 
-# import adafruit_wsgi.esp32spi_wsgiserver as server
-# from adafruit_wsgi.wsgi_app import WSGIApp
+
+import adafruit_logging as logging
 
 DIR_ST_MODE = 16384
 REG_ST_MODE = 32768
@@ -117,9 +105,9 @@ class StaticWSGIApplication:
         return (status, headers, resp_iter())
 
     def _log_environ(self, environ):  # pylint: disable=no-self-use
-        print("environ map:")
+        logging.getLogger("default").debug("environ map:")
         for name, value in environ.items():
-            print(name, value)
+            logging.getLogger("default").debug(f"{name} {value}")
 
     def _get_listener_key(self, method, path):  # pylint: disable=no-self-use
         return "{0}|{1}".format(method.lower(), path)
@@ -148,7 +136,7 @@ class StaticWSGIApplication:
                 else:
                     files.append(abspath.split("/sd/web")[1])
             except Exception as err:
-                print('invalid directory\n', 'Error: ', err)
+                logging.getLogger("default").debug(f"invalid directory\n 'Error: {err}")
         return files
     
     def is_dir(self, file):

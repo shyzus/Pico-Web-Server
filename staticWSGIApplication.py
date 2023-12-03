@@ -14,11 +14,14 @@
 # along with this program.  If not, see https://www.gnu.org/licenses/.
     
 import os
+import gc
 
 import adafruit_logging as logging
 
 DIR_ST_MODE = 16384
 REG_ST_MODE = 32768
+MAX_FILE_CACHE_SIZE = 100000
+FILE_CACHE = {}
 
 class StaticWSGIApplication:
     """
@@ -70,6 +73,15 @@ class StaticWSGIApplication:
 
         self._start_response(status, headers)
         return resp_data
+    
+    def __check_cache__(self):
+        print("Free memory: {0} bytes\t Usage:{1}/{2} bytes".format(gc.mem_free(), gc.mem_alloc(), (gc.mem_free() + gc.mem_alloc()) ))
+        amount = 0
+        for file_path in FILE_CACHE.keys():
+            amount += FILE_CACHE[file_path]["size"]
+        
+        if amount > MAX_FILE_CACHE_SIZE:
+            FILE_CACHE.popitem()
 
     def on(self, method, path, request_handler):
         """
@@ -94,13 +106,28 @@ class StaticWSGIApplication:
         full_path = file_path if not directory else directory + file_path
 
         def resp_iter():
-            with open(full_path, "rb") as file:
-                while True:
-                    chunk = file.read(self.CHUNK_SIZE)
-                    if chunk:
-                        yield chunk
-                    else:
-                        break
+            self.__check_cache__()
+            cached_file = None
+            try:
+                cached_file = FILE_CACHE[full_path]
+            except KeyError as e:
+                print("Did not find {0} in cache.".format(full_path))
+            
+            if cached_file is None:
+                with open(full_path, "rb") as file:
+                    FILE_CACHE[full_path] = {"chunks": [], "size": 0}
+                    while True:
+                        chunk = file.read(self.CHUNK_SIZE)
+                        if chunk:
+                            FILE_CACHE[full_path]["chunks"].append(chunk)
+                            yield chunk
+                        else:
+                            break
+                
+                FILE_CACHE[full_path]["size"] = len(FILE_CACHE[full_path]["chunks"]) * self.CHUNK_SIZE
+            else:
+                for chunk in FILE_CACHE[full_path]["chunks"]:
+                    yield chunk
 
         return (status, headers, resp_iter())
 
@@ -134,7 +161,7 @@ class StaticWSGIApplication:
                 if self.is_dir(abspath):
                     files = files + self.ls_files(abspath)
                 else:
-                    files.append(abspath.split("/sd/web")[1])
+                    files.append(abspath.split(self._static)[1])
             except Exception as err:
                 logging.getLogger("default").debug(f"invalid directory\n 'Error: {err}")
         return files

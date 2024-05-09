@@ -12,5 +12,3 @@ This web server uses an SD Card for the storage for most of its data. Any microS
 # Software
 CircuitPython is required for this project to function.
 Make sure to flash your pico using the [Adafruit website](https://circuitpython.org/board/raspberry_pi_pico/).
-
-There are a set of libraries used that are freely available off of github. However it is much preferred to just use this [git repository](https://gitlab.awaly.nl/hardware-projects/pimoroni-pico-wireless-pack/lib) containing all of them.

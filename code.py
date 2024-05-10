@@ -35,10 +35,6 @@ a_pin = digitalio.DigitalInOut(board.GP12)
 a_pin.direction = digitalio.Direction.INPUT
 a_pin.pull = digitalio.Pull.UP
 
-a_pin = digitalio.DigitalInOut(board.GP12)
-a_pin.direction = digitalio.Direction.INPUT
-a_pin.pull = digitalio.Pull.UP
-
 spi = busio.SPI(board.GP18, board.GP19, board.GP16)
 cs = digitalio.DigitalInOut(board.GP22)
 sdcard = adafruit_sdcard.SDCard(spi, cs)
